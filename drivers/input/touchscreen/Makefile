@@ -100,3 +100,6 @@ obj-$(CONFIG_TOUCHSCREEN_ROHM_BU21023)	+= rohm_bu21023.o
 obj-$(CONFIG_TOUCHSCREEN_ST)		+= st/
 obj-$(CONFIG_TOUCHSCREEN_SIW)           += siw/
 obj-$(CONFIG_BOEFFLA_POWERKEY_HELPER) += boeffla_powerkey_helper.o
+
+obj-$(CONFIG_TOUCHBOOST_CONTROL)	+= touchboost_switch.o
+
