@@ -47,10 +47,18 @@
 #include "wcd_cpe_core.h"
 #include "wcdcal-hwdep.h"
 
+
 #if defined(CONFIG_FIH_PM1) || defined(CONFIG_FIH_A1N)
 #undef USE_QC_MBHC
 #else
 #define USE_QC_MBHC
+
+#ifdef CONFIG_BOEFFLA_SOUND
+#include "boeffla_sound.h"
+struct snd_soc_codec *codec_ptr;
+
+int snd_soc_write_nohook(struct snd_soc_codec *codec, unsigned int reg,
+	unsigned int val);
 #endif
 
 #define TASHA_RX_PORT_START_NUMBER  16
@@ -13597,6 +13605,30 @@ static struct regulator *tasha_codec_find_ondemand_regulator(
 	return NULL;
 }
 
+#ifdef CONFIG_BOEFFLA_SOUND
+int get_headphone_gain_l()
+{
+	return snd_soc_read(codec_ptr, WCD9335_CDC_RX1_RX_VOL_CTL);
+}
+
+int get_headphone_gain_r()
+{
+	return snd_soc_read(codec_ptr, WCD9335_CDC_RX2_RX_VOL_CTL);
+}
+
+void set_headphone_gain_l(int gain)
+{
+	snd_soc_write_nohook(codec_ptr, WCD9335_CDC_RX1_RX_VOL_MIX_CTL, gain);
+	snd_soc_write_nohook(codec_ptr, WCD9335_CDC_RX1_RX_VOL_CTL, gain);
+}
+
+void set_headphone_gain_r(int gain)
+{
+	snd_soc_write_nohook(codec_ptr, WCD9335_CDC_RX2_RX_VOL_MIX_CTL, gain);
+	snd_soc_write_nohook(codec_ptr, WCD9335_CDC_RX2_RX_VOL_CTL, gain);
+}
+#endif
+
 static int tasha_codec_probe(struct snd_soc_codec *codec)
 {
 	struct wcd9xxx *control;
@@ -13606,6 +13638,10 @@ static int tasha_codec_probe(struct snd_soc_codec *codec)
 	int i, ret;
 	void *ptr = NULL;
 	struct regulator *supply;
+
+#ifdef CONFIG_BOEFFLA_SOUND
+	codec_ptr = codec;
+#endif
 
 	control = dev_get_drvdata(codec->dev->parent);
 

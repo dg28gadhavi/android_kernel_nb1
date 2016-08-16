@@ -998,4 +998,10 @@ source "sound/soc/codecs/sdm660_cdc/Kconfig"
 source "sound/soc/codecs/msm_sdw/Kconfig"
 source "sound/soc/codecs/tfa98xx/Kconfig"
 
+config BOEFFLA_SOUND
+	bool "Boeffla Sound engine"
+	default y
+	help
+		Boeffla sound engine by andip71 (aka Lord Boeffla)
+
 endmenu
