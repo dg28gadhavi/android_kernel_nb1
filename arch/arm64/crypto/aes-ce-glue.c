@@ -51,14 +51,17 @@ static int num_rounds(struct crypto_aes_ctx *ctx)
 static void aes_cipher_encrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 {
 	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
-<<<<<<< HEAD:arch/arm64/crypto/aes-ce-glue.c
-=======
 	struct aes_block *out = (struct aes_block *)dst;
 	struct aes_block const *in = (struct aes_block *)src;
 	void *dummy0;
 	int dummy1;
 
-	kernel_neon_begin_partial(4);
+	if (!may_use_simd()) {
+		__aes_arm64_encrypt(ctx->key_enc, dst, src, num_rounds(ctx));
+		return;
+	}
+
+	kernel_neon_begin();
 
 	__asm__("	ld1	{v0.16b}, %[in]			;"
 		"	ld1	{v1.4s}, [%[key]], #16		;"
@@ -83,7 +86,6 @@ static void aes_cipher_encrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 		"	aese	v0.16b, v2.16b			;"
 		"	eor	v0.16b, v0.16b, v3.16b		;"
 		"	st1	{v0.16b}, %[out]		;"
->>>>>>> 8ed0b23... UPSTREAM: crypto: arm64/aes-ce-cipher - match round key endianness with generic code:arch/arm64/crypto/aes-ce-cipher.c
 
 	if (!may_use_simd()) {
 		__aes_arm64_encrypt(ctx->key_enc, dst, src, num_rounds(ctx));
@@ -98,13 +100,18 @@ static void aes_cipher_encrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 static void aes_cipher_decrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 {
 	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
+	struct aes_block *out = (struct aes_block *)dst;
+	struct aes_block const *in = (struct aes_block *)src;
+	void *dummy0;
+	int dummy1;
 
-<<<<<<< HEAD:arch/arm64/crypto/aes-ce-glue.c
 	if (!may_use_simd()) {
 		__aes_arm64_decrypt(ctx->key_dec, dst, src, num_rounds(ctx));
 		return;
 	}
-=======
+
+	kernel_neon_begin();
+
 	__asm__("	ld1	{v0.16b}, %[in]			;"
 		"	ld1	{v1.4s}, [%[key]], #16		;"
 		"	cmp	%w[rounds], #10			;"
@@ -136,7 +143,6 @@ static void aes_cipher_decrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 				"1"(ctx->key_dec),
 				"2"(num_rounds(ctx) - 2)
 	:	"cc");
->>>>>>> 8ed0b23... UPSTREAM: crypto: arm64/aes-ce-cipher - match round key endianness with generic code:arch/arm64/crypto/aes-ce-cipher.c
 
 	kernel_neon_begin();
 	__aes_ce_decrypt(ctx->key_dec, dst, src, num_rounds(ctx));
@@ -171,11 +177,7 @@ int ce_aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
 		u32 *rki = ctx->key_enc + (i * kwords);
 		u32 *rko = rki + kwords;
 
-<<<<<<< HEAD:arch/arm64/crypto/aes-ce-glue.c
-		rko[0] = ror32(__aes_ce_sub(rki[kwords - 1]), 8) ^ rcon[i] ^ rki[0];
-=======
 		rko[0] = ror32(aes_sub(rki[kwords - 1]), 8) ^ rcon[i] ^ rki[0];
->>>>>>> 8ed0b23... UPSTREAM: crypto: arm64/aes-ce-cipher - match round key endianness with generic code:arch/arm64/crypto/aes-ce-cipher.c
 		rko[1] = rko[0] ^ rki[1];
 		rko[2] = rko[1] ^ rki[2];
 		rko[3] = rko[2] ^ rki[3];
@@ -207,9 +209,6 @@ int ce_aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
 
 	key_dec[0] = key_enc[j];
 	for (i = 1, j--; j > 0; i++, j--)
-<<<<<<< HEAD:arch/arm64/crypto/aes-ce-glue.c
-		__aes_ce_invert(key_dec + i, key_enc + j);
-=======
 		__asm__("ld1	{v0.4s}, %[in]		;"
 			"aesimc	v1.16b, v0.16b		;"
 			"st1	{v1.4s}, %[out]	;"
@@ -217,7 +216,6 @@ int ce_aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
 		:	[out]	"=Q"(key_dec[i])
 		:	[in]	"Q"(key_enc[j])
 		:		"v0","v1");
->>>>>>> 8ed0b23... UPSTREAM: crypto: arm64/aes-ce-cipher - match round key endianness with generic code:arch/arm64/crypto/aes-ce-cipher.c
 	key_dec[i] = key_enc[0];
 
 	kernel_neon_end();
