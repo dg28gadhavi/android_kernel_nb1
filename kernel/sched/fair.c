@@ -5417,9 +5417,15 @@ static int find_new_capacity(struct energy_env *eenv,
 	int idx;
 	unsigned long util = group_max_util(eenv);
 
+	/* default is max_cap if we don't find a match */
+	eenv->cap_idx = max_idx;
+
 	for (idx = 0; idx < sge->nr_cap_states; idx++) {
-		if (sge->cap_states[idx].cap >= util)
+		if (sge->cap_states[idx].cap >= util) {
+			eenv->cap_idx = idx;
+
 			break;
+		}
 	}
 
 	eenv->cap_idx = idx;
