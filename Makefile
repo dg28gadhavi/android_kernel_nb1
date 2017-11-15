@@ -655,6 +655,7 @@ ifeq ($(cc-name),clang)
 ifneq ($(CROSS_COMPILE),)
 CLANG_TRIPLE	?= $(CROSS_COMPILE)
 CLANG_TARGET	:= -target $(notdir $(CLANG_TRIPLE:%-=%))
+
 GCC_TOOLCHAIN	:= $(realpath $(dir $(shell which $(LD)))/..)
 endif
 ifneq ($(GCC_TOOLCHAIN),)
@@ -669,6 +670,7 @@ KBUILD_CFLAGS += $(call cc-disable-warning, gnu)
 KBUILD_CFLAGS += $(call cc-disable-warning, address-of-packed-member)
 KBUILD_CFLAGS += $(call cc-disable-warning, duplicate-decl-specifier)
 KBUILD_CFLAGS += $(call cc-disable-warning, pointer-bool-conversion)
+
 # Quiet clang warning: comparison of unsigned expression < 0 is always false
 KBUILD_CFLAGS += $(call cc-disable-warning, tautological-compare)
 # CLANG uses a _MergedGlobals as optimization, but this breaks modpost, as the
@@ -683,6 +685,7 @@ else
 # These warnings generated too much noise in a regular build.
 # Use make W=1 to enable them (see scripts/Makefile.build)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
+KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
 endif
 
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
