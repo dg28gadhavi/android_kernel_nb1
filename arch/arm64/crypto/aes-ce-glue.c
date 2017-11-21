@@ -51,10 +51,6 @@ static int num_rounds(struct crypto_aes_ctx *ctx)
 static void aes_cipher_encrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 {
 	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct aes_block *out = (struct aes_block *)dst;
-	struct aes_block const *in = (struct aes_block *)src;
-	void *dummy0;
-	int dummy1;
 
 	if (!may_use_simd()) {
 		__aes_arm64_encrypt(ctx->key_enc, dst, src, num_rounds(ctx));
@@ -100,10 +96,6 @@ static void aes_cipher_encrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 static void aes_cipher_decrypt(struct crypto_tfm *tfm, u8 dst[], u8 const src[])
 {
 	struct crypto_aes_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct aes_block *out = (struct aes_block *)dst;
-	struct aes_block const *in = (struct aes_block *)src;
-	void *dummy0;
-	int dummy1;
 
 	if (!may_use_simd()) {
 		__aes_arm64_decrypt(ctx->key_dec, dst, src, num_rounds(ctx));
@@ -177,7 +169,7 @@ int ce_aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
 		u32 *rki = ctx->key_enc + (i * kwords);
 		u32 *rko = rki + kwords;
 
-		rko[0] = ror32(aes_sub(rki[kwords - 1]), 8) ^ rcon[i] ^ rki[0];
+		rko[0] = ror32(__aes_ce_sub(rki[kwords - 1]), 8) ^ rcon[i] ^ rki[0];
 		rko[1] = rko[0] ^ rki[1];
 		rko[2] = rko[1] ^ rki[2];
 		rko[3] = rko[2] ^ rki[3];
@@ -209,13 +201,7 @@ int ce_aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
 
 	key_dec[0] = key_enc[j];
 	for (i = 1, j--; j > 0; i++, j--)
-		__asm__("ld1	{v0.4s}, %[in]		;"
-			"aesimc	v1.16b, v0.16b		;"
-			"st1	{v1.4s}, %[out]	;"
-
-		:	[out]	"=Q"(key_dec[i])
-		:	[in]	"Q"(key_enc[j])
-		:		"v0","v1");
+		__aes_ce_invert(key_dec + i, key_enc + j);
 	key_dec[i] = key_enc[0];
 
 	kernel_neon_end();
