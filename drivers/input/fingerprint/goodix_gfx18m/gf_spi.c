@@ -518,6 +518,20 @@ static const struct file_operations gf_fops = {
 #endif
 };
 
+static void set_fingerprintd_nicer(int nice)
+{
+			struct task_struct *p;
+
+		read_lock(&tasklist_lock);
+		for_each_process(p) {
+		if (!memcmp(p->comm, "fingerprintd", 13)) {
+			set_user_nice(p, nice);
+			break;
+			}
+		}
+	read_unlock(&tasklist_lock);
+}
+
 static int goodix_fb_state_chg_callback(struct notifier_block *nb,
 					unsigned long val, void *data)
 {
@@ -545,6 +559,7 @@ static int goodix_fb_state_chg_callback(struct notifier_block *nb,
 				/*device unavailable */
 				//gf_dev->device_available = 0;
 			}
+			set_fingerprintd_nicer(-1);
 			break;
 		case FB_BLANK_UNBLANK:
 			if (gf_dev->device_available == 1) {
@@ -558,6 +573,7 @@ static int goodix_fb_state_chg_callback(struct notifier_block *nb,
 				/*device available */
 				//gf_dev->device_available = 1;
 			}
+			set_fingerprintd_nicer(0);
 			break;
 		default:
 			pr_info("%s defalut\n", __func__);
