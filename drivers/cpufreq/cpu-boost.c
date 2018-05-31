@@ -167,13 +167,10 @@ static void update_policy_online(void)
 	get_online_cpus();
 	for_each_online_cpu(i) {
 		/*
-		 * both clusters have synchronous cpus
-		 * no need to update the policy for each core
-		 * individually, saving at least one [down|up] write
-		 * and a [lock|unlock] irqrestore per pass
+		 * Both clusters have synchronous cores, only update
+		 * the frequency for one core in each cluster.
 		 */
-		if ((i & 1) == 0) {
-			pr_debug("Updating policy for CPU%d\n", i);
+		if (i == 0 || i == 4) {
 			cpufreq_update_policy(i);
 		}
 	}
