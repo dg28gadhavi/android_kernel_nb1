@@ -38,15 +38,23 @@ else
 echo -e "$Green  UberTC Repository Already Present  $nocol"
 fi
 
+if [ ! -d ~/linux-x86 ]; then
+echo -e "$Cyan  Cloning Clang Repository  $nocol"
+git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 ~/linux-x86
+echo -e "$Green  Clang Repository Cloned  $nocol"
+else
+echo -e "$Green  Clang Repository Already Present  $nocol"
+fi
+
 echo -e "$Blue  Setting Up Toolchain $nocol"
 export CROSS_COMPILE="/home/$(whoami)/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
-echo -e "$Yellow  Setting Up Toolchain  $nocol"
+echo -e "$Yellow  Setting Up Architecture  $nocol"
 export ARCH=arm64 && export SUBARCH=arm64
 echo -e "$Green  Toolchain Path Exported  $nocol"
 
 echo -e "$Red  Starting Compilation  $nocol"
-export KBUILD_BUILD_USER="hmd"
-export KBUILD_BUILD_HOST="nokia"
+export KBUILD_BUILD_USER="Hmd"
+export KBUILD_BUILD_HOST="Nokia"
 mkdir -p out 
 echo -e "$Green  Making Clean  $nocol"
 make O=out/ clean
@@ -54,6 +62,10 @@ make O=out/ mrproper
 echo -e "$Green  Setting Up Deconfig  $nocol"
 make O=out/ NB1_defconfig 
 echo -e "$Red  Compilation Started  $nocol"
-make O=out/ -j$(nproc --all)
+make -j$(nproc --all) O=out \
+                                    CC="/home/$(whoami)/linux-x86/clang-4053586/bin/clang" \
+                                    CLANG_TRIPLE=aarch64-linux-gnu- \
+
+
 
 
