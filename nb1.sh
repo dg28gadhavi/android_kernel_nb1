@@ -63,7 +63,7 @@ echo -e "$Green  Setting Up Deconfig  $nocol"
 make O=out/ NB1_defconfig 
 echo -e "$Red  Compilation Started  $nocol"
 make -j$(nproc --all) O=out \
-                                    CC="/home/$(whoami)/linux-x86/clang-4053586/bin/clang" \
+                                    CC="/home/$(whoami)/linux-x86/clang-r328903/bin/clang" \
                                     CLANG_TRIPLE=aarch64-linux-gnu- \
 
 
