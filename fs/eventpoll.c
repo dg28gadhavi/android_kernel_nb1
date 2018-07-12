@@ -1227,16 +1227,16 @@ static int ep_create_wakeup_source(struct epitem *epi)
 	const char *name;
 	struct wakeup_source *ws;
 
+	name = epi->ffd.file->f_path.dentry->d_name.name;
+
 	if (!epi->ep->ws) {
-                char wname[256];
-                snprintf(wname, sizeof(wname), "%s %d: %s eventpoll", current->comm, current->pid, ( epi->ffd.file->f_path.dentry->d_name.name) ? epi->ffd.file->f_path.dentry->d_name.name : "N/A");
-                epi->ep->ws = wakeup_source_register(wname);
-				dump_stack();
+                char buf[64];
+                snprintf(buf, sizeof(buf), "eventpoll pid:%d file:%s", current->pid, name);
+                epi->ep->ws = wakeup_source_register(buf);
 		if (!epi->ep->ws)
 			return -ENOMEM;
 	}
 
-	name = epi->ffd.file->f_path.dentry->d_name.name;
 	ws = wakeup_source_register(name);
 
 	if (!ws)
@@ -1251,9 +1251,6 @@ static noinline void ep_destroy_wakeup_source(struct epitem *epi)
 {
 	struct wakeup_source *ws = ep_wakeup_source(epi);
 
-	printk(KERN_ERR "%s %d: epi %p ws name %s destroy\n", current->comm, current->pid, epi, ws->name); 
-    dump_stack(); 
-	
 	RCU_INIT_POINTER(epi->ws, NULL);
 
 	/*
