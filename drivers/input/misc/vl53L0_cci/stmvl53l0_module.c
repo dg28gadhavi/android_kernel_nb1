@@ -1014,10 +1014,11 @@ int stmvl53l0_poll_thread(void *data)
 			stmvl53l0_schedule_handler(vl53l0_dev);
 			//pr_err("%s(%d) : stmvl53l0_schedule_handler()\n", __FUNCTION__, __LINE__);/* MM-MC-Fix-TOF-deinit-deadlock-00+ */
 		} else {
+                        struct cci_data *cci_data = (struct cci_data *)vl53l0_dev->client_object;
+
 			vl53l0_dev->noInterruptCount++;
 			/* MM-MC-Fix-TOF-deinit-deadlock-00+{ */
 			//pr_err("%s(%d) : noInterruptCount++ \n", __FUNCTION__, __LINE__);
-			struct cci_data *cci_data = (struct cci_data *)vl53l0_dev->client_object;
 			if ((vl53l0_dev->enable_ps_sensor == 1)&&(cci_data->power_up == 0))
 			{
 				pr_err("%s(%d) : enable_ps_sensor = %d, power_up = %d, Send fake TOF data \n", __FUNCTION__ 
