@@ -55,7 +55,13 @@ echo -e "$Green  Toolchain Path Exported  $nocol"
 echo -e "$Red  Starting Compilation  $nocol"
 export KBUILD_BUILD_USER="Hmd"
 export KBUILD_BUILD_HOST="Nokia"
-mkdir -p out 
+mkdir -p out/
+echo -e "$Cyan  Copying dts  $nocol"
+mkdir -p out/arch/arm64/
+cp -r arch/arm64/boot out/arch/arm64/
+rm -rf out/arch/arm64/boot/dts/qcom
+mkdir -p out/arch/arm64/boot/dts/qcom/
+cp arch/arm64/boot/dts/qcom/*.dts* out/arch/arm64/boot/dts/qcom/
 echo -e "$Green  Making Clean  $nocol"
 make O=out/ clean
 make O=out/ mrproper 
