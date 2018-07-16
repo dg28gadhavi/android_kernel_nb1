@@ -55,6 +55,7 @@ echo -e "$Green  Toolchain Path Exported  $nocol"
 echo -e "$Red  Starting Compilation  $nocol"
 export KBUILD_BUILD_USER="Hmd"
 export KBUILD_BUILD_HOST="Nokia"
+rm -rf out
 mkdir -p out/
 echo -e "$Cyan  Copying dts  $nocol"
 mkdir -p out/arch/arm64/
