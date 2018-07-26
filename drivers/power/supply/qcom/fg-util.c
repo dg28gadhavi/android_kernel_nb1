@@ -268,26 +268,14 @@ int fg_sram_write(struct fg_chip *chip, u16 address, u8 offset,
 	bool tried_again = false;
 	bool atomic_access = false;
 
-	if (!chip) {
-		#ifdef BBS_LOG
-			QPNPFG_WRITE_ERROR;
-		#endif
+	if (!chip)
 		return -ENXIO;
-	}
 
-	if (chip->battery_missing) {
-		#ifdef BBS_LOG
-			QPNPFG_WRITE_ERROR;
-		#endif
+	if (chip->battery_missing)
 		return -ENODATA;
-	}
 
-	if (!fg_sram_address_valid(address, len)) {
-		#ifdef BBS_LOG
-			QPNPFG_WRITE_ERROR;
-		#endif
+	if (!fg_sram_address_valid(address, len))
 		return -EFAULT;
-	}
 
 	if (!(flags & FG_IMA_NO_WLOCK))
 		vote(chip->awake_votable, SRAM_WRITE, true, 0);
@@ -333,11 +321,6 @@ wait:
 	if (rc < 0)
 		pr_err("Error in writing SRAM address 0x%x[%d], rc=%d\n",
 			address, offset, rc);
-
-	#ifdef BBS_LOG
-	if(rc < 0)
-		QPNPFG_WRITE_ERROR;
-	#endif
 out:
 	if (atomic_access)
 		disable_irq_nosync(chip->irqs[SOC_UPDATE_IRQ].irq);
@@ -353,26 +336,14 @@ int fg_sram_read(struct fg_chip *chip, u16 address, u8 offset,
 {
 	int rc = 0;
 
-	if (!chip) {
-		#ifdef BBS_LOG
-			QPNPFG_READ_ERROR;
-		#endif
+	if (!chip)
 		return -ENXIO;
-	}
 
-	if (chip->battery_missing) {
-		#ifdef BBS_LOG
-			QPNPFG_READ_ERROR;
-		#endif
+	if (chip->battery_missing)
 		return -ENODATA;
-	}
 
-	if (!fg_sram_address_valid(address, len)) {
-		#ifdef BBS_LOG
-			QPNPFG_READ_ERROR;
-		#endif
+	if (!fg_sram_address_valid(address, len))
 		return -EFAULT;
-	}
 
 	if (!(flags & FG_IMA_NO_WLOCK))
 		vote(chip->awake_votable, SRAM_READ, true, 0);
@@ -382,11 +353,6 @@ int fg_sram_read(struct fg_chip *chip, u16 address, u8 offset,
 	if (rc < 0)
 		pr_err("Error in reading SRAM address 0x%x[%d], rc=%d\n",
 			address, offset, rc);
-
-	#ifdef BBS_LOG
-	if(rc < 0)
-		QPNPFG_READ_ERROR;
-	#endif
 
 	mutex_unlock(&chip->sram_rw_lock);
 	if (!(flags & FG_IMA_NO_WLOCK))
