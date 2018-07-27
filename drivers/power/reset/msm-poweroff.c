@@ -79,11 +79,7 @@ static int dload_type = SCM_DLOAD_FULLDUMP;
 static int download_mode = 1;
 static struct kobject dload_kobj;
 static void *dload_mode_addr, *dload_type_addr;
-#ifdef CONFIG_FIH_DLOAD
-static bool dload_mode_enabled = false;  /* FIH: default disable ramdump */
-#else
 static bool dload_mode_enabled;
-#endif
 static void *emergency_dload_mode_addr;
 #ifdef CONFIG_RANDOMIZE_BASE
 static void *kaslr_imem_addr;
@@ -106,14 +102,14 @@ struct reset_attribute {
 			__ATTR(_name, _mode, _show, _store)
 
 #ifdef CONFIG_FIH_DLOAD
-static int __init oem_dload_set(char *str);//* FIH, ramdump set by fastboot 
+static int __init oem_dload_set(char *str);//* FIH, ramdump set by fastboot *//
 #endif
 
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 
 #ifdef CONFIG_FIH_DLOAD
-__setup("download_mode=", oem_dload_set);//* FIH, ramdump set by fastboot oem command			
+__setup("download_mode=", oem_dload_set);//* FIH, ramdump set by fastboot oem command			*//
 #endif
 
 static int panic_prep_restart(struct notifier_block *this,
@@ -177,7 +173,6 @@ static bool get_dload_mode(void)
 	return dload_mode_enabled;
 }
 
-#if 0
 static void enable_emergency_dload_mode(void)
 {
 	int ret;
@@ -202,7 +197,6 @@ static void enable_emergency_dload_mode(void)
 	if (ret)
 		pr_err("Failed to set secure EDLOAD mode: %d\n", ret);
 }
-#endif
 
 static int dload_set(const char *val, struct kernel_param *kp)
 {
@@ -225,7 +219,7 @@ static int dload_set(const char *val, struct kernel_param *kp)
 }
 
 #ifdef CONFIG_FIH_DLOAD
-//* FIH, ramdump set by fastboot oem command
+//* FIH, ramdump set by fastboot oem command *//
 static int __init oem_dload_set(char *str)
 {
     int old_val = download_mode; 
@@ -260,6 +254,18 @@ static bool get_dload_mode(void)
 	return false;
 }
 #endif
+
+/*to support fih apr */
+unsigned int restart_reason_rd(void)
+{
+	return readl(restart_reason);
+}
+
+void restart_reason_wt(unsigned int rere)
+{
+	__raw_writel(rere, restart_reason);
+}
+/*to support fih apr */
 
 static void scm_disable_sdi(void)
 {
@@ -380,10 +386,9 @@ static void msm_restart_prepare(const char *cmd)
 			if (!ret)
 				__raw_writel(0x6f656d00 | (code & 0xff),
 					     restart_reason);
-#if 0
+
 		} else if (!strncmp(cmd, "edl", 3)) {
 			enable_emergency_dload_mode();
-#endif
 		} else {
 #ifdef CONFIG_FIH_APR
 			qpnp_pon_set_restart_reason(FIH_RERE_REBOOT_DEVICE);	//Normal boot
@@ -603,7 +608,7 @@ static int msm_restart_probe(struct platform_device *pdev)
 	struct device_node *np;
 	int ret = 0;
 #ifdef CONFIG_FIH_DLOAD
-	int scm_download_mode = 0;
+	int scm_download_mode = 1;
 #endif
 
 #ifdef CONFIG_QCOM_DLOAD_MODE

@@ -39,5 +39,8 @@ enum pon_restart_reason {
 #define FIH_RERE_SHUTDOWN_DEVICE      0x2A
 #define FIH_RERE_REBOOT_DEVICE        0x2B
 
+unsigned int fih_rere_rd_imem(void);
+void fih_rere_wt_imem(unsigned int rere);
+
 #endif
 

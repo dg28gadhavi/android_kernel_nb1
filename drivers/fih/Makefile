@@ -11,3 +11,4 @@ obj-y += fih_lcm.o
 obj-$(CONFIG_FIH_DDRTEST) += fih_ddr_test.o
 obj-y += fih_battery.o
 obj-$(CONFIG_FIH_GPIO) += fih_gpio.o
+obj-y += fih_rere.o

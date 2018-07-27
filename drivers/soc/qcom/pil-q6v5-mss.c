@@ -42,6 +42,12 @@
 #define MAX_SSR_REASON_LEN	130U
 #define STOP_ACK_TIMEOUT_MS	1000
 
+/*to support fih apr { */
+//VNA-3504, add modem failure reason
+char
+fih_failure_reason[MAX_SSR_REASON_LEN];
+/*to support fih apr } */
+
 #define subsys_to_drv(d) container_of(d, struct modem_data, subsys_desc)
 
 char fih_failure_reason[MAX_SSR_REASON_LEN];
