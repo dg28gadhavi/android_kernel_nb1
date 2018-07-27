@@ -289,6 +289,13 @@ Required properties:
 
  - compatible : "qcom,msm-pcm-hostless"
 
+Optional properties
+
+ - compatible : "qcom,audio-test-mod"
+		Add this compatible as child device to hostless device.
+		This child device is added after lpass is up to invoke
+		deferred probe devices.
+
 * msm-ocmem-audio
 
 Required properties:
@@ -631,6 +638,9 @@ Example:
 
         qcom,msm-pcm-hostless {
                 compatible = "qcom,msm-pcm-hostless";
+		audio-test-mod {
+			compatible = "qcom,audio-test-mod";
+		};
         };
 
 	qcom,msm-ocmem-audio {
@@ -891,8 +901,6 @@ Optional properties:
 	 "lpaif_quat_mode_muxsel": Physical address of MUX to select between
 				   Secondary PCM and Quarternary MI2S
 - qcom,hdmi-audio-rx: specifies if HDMI audio support is enabled or not.
-- qcom,ext-disp-audio-rx: specifies if external display(HDMI/DP) audio support
-			  is enabled or not.
 - qcom,ext-ult-spk-amp-gpio : GPIO for enabling of speaker path amplifier.
 
 - qcom,ext-ult-lo-amp-gpio: GPIO to enable external ultrasound lineout

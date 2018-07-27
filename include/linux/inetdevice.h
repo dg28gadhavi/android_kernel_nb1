@@ -130,6 +130,7 @@ static inline void ipv4_devconf_setall(struct in_device *in_dev)
 #define IN_DEV_ARP_NOTIFY(in_dev)	IN_DEV_MAXCONF((in_dev), ARP_NOTIFY)
 #define IN_DEV_NF_IPV4_DEFRAG_SKIP(in_dev) \
 	IN_DEV_ORCONF((in_dev), NF_IPV4_DEFRAG_SKIP)
+
 struct in_ifaddr {
 	struct hlist_node	hash;
 	struct in_ifaddr	*ifa_next;

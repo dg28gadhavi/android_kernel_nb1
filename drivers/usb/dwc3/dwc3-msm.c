@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -234,6 +234,7 @@ struct dwc3_msm {
 	struct pm_qos_request pm_qos_req_dma;
 	struct delayed_work perf_vote_work;
 	struct delayed_work sdp_check;
+	bool usb_compliance_mode;
 	struct mutex suspend_resume_mutex;
 };
 
@@ -254,73 +255,6 @@ struct dwc3_msm {
 
 static void dwc3_pwr_event_handler(struct dwc3_msm *mdwc);
 static int dwc3_msm_gadget_vbus_draw(struct dwc3_msm *mdwc, unsigned mA);
-
-/* Set gpio 21,42 to output high for usb redriver */
-#ifdef CONFIG_FIH_NB1
-static int mRedriver_vdd_gpio = 0;
-static int mRedriver_en_gpio = 0;
-
-int fihGetUsbRedriverGpio(struct platform_device *pdev){
-	struct device_node *node = pdev->dev.of_node;
-	struct device *dev = &pdev->dev;
-
-	if(mRedriver_vdd_gpio == 0){
-		mRedriver_vdd_gpio = of_get_named_gpio(node,"fih,redriver-vdd", 0);
-		if(gpio_is_valid(mRedriver_vdd_gpio)
-			&& (!devm_gpio_request(dev, mRedriver_vdd_gpio,
-			"fih,redriver-vdd"))) {
-			dev_info(dev, "fih,redriver-vdd gpio:%d\n", mRedriver_vdd_gpio);
-		}
-		else{
-			return -1;
-		}
-	}
-	if(mRedriver_en_gpio == 0){
-		mRedriver_en_gpio = of_get_named_gpio(node,"fih,redriver-en", 0);
-		if(gpio_is_valid(mRedriver_en_gpio)
-			&& (!devm_gpio_request(dev, mRedriver_en_gpio,
-			"fih,redriver-en"))) {
-			dev_info(dev, "fih,redriver-en gpio:%d\n", mRedriver_en_gpio);
-		}
-		else{
-			return -1;
-		}
-	}
-	return 0;
-}
-
-int fihSetUsbRedriverGpio(struct device *dev, int highLow){
-	if(!gpio_is_valid(mRedriver_vdd_gpio) || !gpio_is_valid(mRedriver_en_gpio)){
-		dev_err(dev, "redriver gpio is invalid\n");
-		return -1;
-	}
-
-	gpio_direction_output(mRedriver_vdd_gpio, highLow);
-	gpio_direction_output(mRedriver_en_gpio, highLow);
-
-	return 0;
-}
-#endif
-/* end FIH - NB1-53 */
-
-/* Dump typec sts register value */
-#if defined(CONFIG_FIH_NB1) || defined(CONFIG_FIH_A1N)
-int dumpTypeCSts(struct dwc3 *dwc)
-{
-	union power_supply_propval pval = {0};
-	struct power_supply	*usb_psy;
-	dev_err(dwc->dev, "%s:\n", __func__);
-	usb_psy = power_supply_get_by_name("usb");
-	if(!usb_psy){
-		dev_err(dwc->dev, "%s:can't find usb_psy\n", __func__);
-		return -ENODEV;
-	}
-	power_supply_get_property(usb_psy, POWER_SUPPLY_PROP_TYPEC_MODE, &pval);
-
-	return 0;
-}
-#endif
-/* end FIH - NB1-680 */
 
 /**
  *
@@ -2228,12 +2162,6 @@ static int dwc3_msm_suspend(struct dwc3_msm *mdwc)
 		mdwc->lpm_flags |= MDWC3_ASYNC_IRQ_WAKE_CAPABILITY;
 	}
 
-/* Set gpio 21,42 to output high for usb redriver */
-#ifdef CONFIG_FIH_NB1
-	fihSetUsbRedriverGpio(mdwc->dev, 0);
-#endif
-/* end FIH - NB1-720 */
-
 	dev_info(mdwc->dev, "DWC3 in low power mode\n");
 	mutex_unlock(&mdwc->suspend_resume_mutex);
 	return 0;
@@ -2248,13 +2176,6 @@ static int dwc3_msm_resume(struct dwc3_msm *mdwc)
 	dev_dbg(mdwc->dev, "%s: exiting lpm\n", __func__);
 
 	mutex_lock(&mdwc->suspend_resume_mutex);
-
-/* Set gpio 21,42 to output high for usb redriver */
-#ifdef CONFIG_FIH_NB1
-	fihSetUsbRedriverGpio(mdwc->dev, 1);
-#endif
-/* end FIH - NB1-720 */
-
 	if (!atomic_read(&dwc->in_lpm)) {
 		dev_dbg(mdwc->dev, "%s: Already resumed\n", __func__);
 		mutex_unlock(&mdwc->suspend_resume_mutex);
@@ -2310,12 +2231,9 @@ static int dwc3_msm_resume(struct dwc3_msm *mdwc)
 	clk_set_rate(mdwc->core_clk, core_clk_rate);
 	clk_prepare_enable(mdwc->core_clk);
 
-	/* Otg cable can't attach earlier than usb disk */
-	// QC patch
 	/* set Memory core: ON, Memory periphery: ON */
 	clk_set_flags(mdwc->core_clk, CLKFLAG_RETAIN_MEM);
 	clk_set_flags(mdwc->core_clk, CLKFLAG_RETAIN_PERIPH);
-	/* end FIH - NB1-634 */
 
 	clk_prepare_enable(mdwc->utmi_clk);
 	if (mdwc->bus_aggr_clk)
@@ -2739,6 +2657,13 @@ static void check_for_sdp_connection(struct work_struct *w)
 	if (!mdwc->vbus_active)
 		return;
 
+	/* USB 3.1 compliance equipment usually repoted as floating
+	 * charger as HS dp/dm lines are never connected. Do not
+	 * tear down USB stack if compliance parameter is set
+	 */
+	if (mdwc->usb_compliance_mode)
+		return;
+
 	/* floating D+/D- lines detected */
 	if (dwc->gadget.state < USB_STATE_DEFAULT &&
 		dwc3_gadget_get_link_state(dwc) != DWC3_LINK_STATE_CMPLY) {
@@ -2947,6 +2872,30 @@ static ssize_t xhci_link_compliance_store(struct device *dev,
 }
 
 static DEVICE_ATTR_RW(xhci_link_compliance);
+
+static ssize_t usb_compliance_mode_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct dwc3_msm *mdwc = dev_get_drvdata(dev);
+
+	return snprintf(buf, PAGE_SIZE, "%c\n",
+			mdwc->usb_compliance_mode ? 'Y' : 'N');
+}
+
+static ssize_t usb_compliance_mode_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int ret = 0;
+	struct dwc3_msm *mdwc = dev_get_drvdata(dev);
+
+	ret = strtobool(buf, &mdwc->usb_compliance_mode);
+
+	if (ret)
+		return ret;
+
+	return count;
+}
+static DEVICE_ATTR_RW(usb_compliance_mode);
 
 static int dwc3_msm_probe(struct platform_device *pdev)
 {
@@ -3159,16 +3108,6 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 		}
 	}
 
-/* FIH - akckwang - NB1-868 - Set gpio 21,42 to output low in probe */
-/* FIH - akckwang - NB1-53 - Set gpio 21,42 to output high for usb redriver */
-#ifdef CONFIG_FIH_NB1
-	if(fihGetUsbRedriverGpio(pdev) == 0){
-		fihSetUsbRedriverGpio(&pdev->dev, 0);
-	}
-#endif
-/* end FIH - NB1-53 */
-/* end FIH - NB1-868 */
-
 	ext_hub_reset_gpio = of_get_named_gpio(node,
 					"qcom,ext-hub-reset-gpio", 0);
 
@@ -3304,6 +3243,7 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 	device_create_file(&pdev->dev, &dev_attr_mode);
 	device_create_file(&pdev->dev, &dev_attr_speed);
 	device_create_file(&pdev->dev, &dev_attr_xhci_link_compliance);
+	device_create_file(&pdev->dev, &dev_attr_usb_compliance_mode);
 
 	host_mode = usb_get_dr_mode(&mdwc->dwc3->dev) == USB_DR_MODE_HOST;
 	if (host_mode ||
@@ -3543,6 +3483,7 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 	if (on) {
 		dev_dbg(mdwc->dev, "%s: turn on host\n", __func__);
 
+		pm_runtime_get_sync(mdwc->dev);
 		mdwc->hs_phy->flags |= PHY_HOST_MODE;
 		if (dwc->maximum_speed == USB_SPEED_SUPER) {
 			mdwc->ss_phy->flags |= PHY_HOST_MODE;
@@ -3551,7 +3492,6 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 		}
 
 		usb_phy_notify_connect(mdwc->hs_phy, USB_SPEED_HIGH);
-		pm_runtime_get_sync(mdwc->dev);
 		dbg_event(0xFF, "StrtHost gync",
 			atomic_read(&mdwc->dev->power.usage_count));
 		if (!IS_ERR(mdwc->vbus_reg))

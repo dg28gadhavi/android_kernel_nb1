@@ -91,8 +91,6 @@ struct hbtp_data {
 	bool manage_pin_ctrl;
 	s16 ROI[MAX_ROI_SIZE];
 	s16 accelBuffer[MAX_ACCEL_SIZE];
-	bool afe_force_power_on;
-	bool regulator_enabled;
 };
 
 static struct hbtp_data *hbtp;
@@ -407,11 +405,6 @@ static int hbtp_pdev_power_on(struct hbtp_data *hbtp, bool on)
 	if (!on)
 		goto reg_off;
 
-	if (hbtp->regulator_enabled) {
-		pr_debug("%s: regulator already enabled\n", __func__);
-		return 0;
-	}
-
 	if (hbtp->vcc_ana) {
 		ret = reg_set_load_check(hbtp->vcc_ana,
 			hbtp->afe_load_ua);
@@ -455,16 +448,9 @@ static int hbtp_pdev_power_on(struct hbtp_data *hbtp, bool on)
 		}
 	}
 
-	hbtp->regulator_enabled = true;
-
 	return 0;
 
 reg_off:
-	if (!hbtp->regulator_enabled) {
-		pr_debug("%s: regulator not enabled\n", __func__);
-		return 0;
-	}
-
 	if (hbtp->vcc_dig) {
 		reg_set_load_check(hbtp->vcc_dig, 0);
 		regulator_disable(hbtp->vcc_dig);
@@ -481,9 +467,6 @@ reg_off:
 		reg_set_load_check(hbtp->vcc_ana, 0);
 		regulator_disable(hbtp->vcc_ana);
 	}
-
-	hbtp->regulator_enabled = false;
-
 	return 0;
 }
 
@@ -982,9 +965,6 @@ static int hbtp_parse_dt(struct device *dev)
 			hbtp->power_on_delay, hbtp->power_off_delay);
 	}
 
-	hbtp->afe_force_power_on =
-		of_property_read_bool(np, "qcom,afe-force-power-on");
-
 	prop = of_find_property(np, "qcom,display-resolution", NULL);
 	if (prop != NULL) {
 		if (!prop->value)
@@ -1278,19 +1258,13 @@ static int hbtp_fb_early_resume(struct hbtp_data *ts)
 
 	pr_debug("%s: hbtp_fb_early_resume\n", __func__);
 
-	if (ts->pdev && (ts->power_sync_enabled || ts->afe_force_power_on)) {
+	if (ts->pdev && ts->power_sync_enabled) {
 		pr_debug("%s: power_sync is enabled\n", __func__);
-
-		if (!ts->power_suspended &&
-		   (ts->afe_force_power_on == false)) {
+		if (!ts->power_suspended) {
 			pr_err("%s: power is not suspended\n", __func__);
 			mutex_unlock(&hbtp->mutex);
 			return 0;
 		}
-
-		if (ts->afe_force_power_on)
-			ts->afe_force_power_on = false;
-
 		rc = hbtp_pdev_power_on(ts, true);
 		if (rc) {
 			pr_err("%s: failed to enable panel power\n", __func__);

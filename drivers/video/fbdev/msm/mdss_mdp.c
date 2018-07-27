@@ -1,7 +1,7 @@
 /*
  * MDSS MDP Interface (used by framebuffer core)
  *
- * Copyright (c) 2007-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2007-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2007 Google Incorporated
  *
  * This software is licensed under the terms of the GNU General Public
@@ -233,7 +233,6 @@ static struct mdss_mdp_irq mdp_irq_map[] =  {
 
 static struct intr_callback *mdp_intr_cb;
 
-static void mdss_mdp_footswitch_ctrl(struct mdss_data_type *mdata, int on);
 static int mdss_mdp_parse_dt(struct platform_device *pdev);
 static int mdss_mdp_parse_dt_pipe(struct platform_device *pdev);
 static int mdss_mdp_parse_dt_mixer(struct platform_device *pdev);
@@ -2034,8 +2033,8 @@ static void mdss_mdp_hw_rev_caps_init(struct mdss_data_type *mdata)
 	mdata->hflip_buffer_reused = true;
 	/* prevent disable of prefill calculations */
 	mdata->min_prefill_lines = 0xffff;
-	/* clock gating feature is enabled by default */
-	mdata->enable_gate = true;
+	/* clock gating feature is disabled by default */
+	mdata->enable_gate = false;
 	mdata->pixel_ram_size = 0;
 	mem_protect_sd_ctrl_id = MEM_PROTECT_SD_CTRL_FLAT;
 
@@ -2436,6 +2435,8 @@ static u32 mdss_mdp_scaler_init(struct mdss_data_type *mdata,
 
 		ret = mdss_mdp_ds_addr_setup(mdata);
 	}
+
+	mutex_init(&mdata->scaler_off->scaler_lock);
 
 	return ret;
 }
@@ -5190,7 +5191,7 @@ static void mdss_mdp_notify_idle_pc(struct mdss_data_type *mdata)
  * active (but likely in an idle state), the vote for the CX and the batfet
  * rails should not be released.
  */
-static void mdss_mdp_footswitch_ctrl(struct mdss_data_type *mdata, int on)
+void mdss_mdp_footswitch_ctrl(struct mdss_data_type *mdata, int on)
 {
 	int ret;
 	int active_cnt = 0;

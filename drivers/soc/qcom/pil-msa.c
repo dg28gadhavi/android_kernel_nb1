@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -79,7 +79,7 @@
 /* CX_IPEAK Parameters */
 #define CX_IPEAK_MSS			BIT(5)
 /* Timeout value for MBA boot when minidump is enabled */
-#define MBA_ENCRYPTION_TIMEOUT	3000
+#define MBA_ENCRYPTION_TIMEOUT	5000
 enum scm_cmd {
 	PAS_MEM_SETUP_CMD = 2,
 };
@@ -547,7 +547,6 @@ err_restart:
 err_power:
 	return ret;
 }
-static bool fih_nv_assigned = false;
 
 int pil_mss_reset_load_mba(struct pil_desc *pil)
 {
@@ -565,23 +564,6 @@ int pil_mss_reset_load_mba(struct pil_desc *pil)
 	struct device *dma_dev = md->mba_mem_dev_fixed ?: &md->mba_mem_dev;
 
 	trace_pil_func(__func__);
-
-  pr_notice("%s: %s\n", __func__, pil->name);
-	if (!(strncmp(pil->name, "modem", sizeof(char)*5))) {
-	  if (!fih_nv_assigned) {
-			pr_notice("%s: Assign %s memory 0xA0000000 0x00900000 (initial)\n", __func__, pil->name);
-			ret = pil_assign_mem_to_subsys_and_linux(pil, 0xA0000000, 0x00900000);
-			if (ret) {
-			  pr_notice("%s: Assign %s memory Error !!!!!!\n", __func__, pil->name);
-		  fih_nv_assigned = false;
-        dev_err(pil->dev, "Failed to assign %s memory, ret - %d\n", pil->name, ret);
-			}
-		fih_nv_assigned = true;
-		} else {
-		pr_notice("%s: Assign %s memory 0xA0000000 0x00900000 (re-init)\n", __func__, pil->name);
-	  }
-	}
-
 	fw_name_p = drv->non_elf_image ? fw_name_legacy : fw_name;
 	ret = request_firmware(&fw, fw_name_p, pil->dev);
 	if (ret) {
@@ -619,6 +601,7 @@ int pil_mss_reset_load_mba(struct pil_desc *pil)
 		}
 		drv->dp_size = dp_fw->size;
 		drv->mba_dp_size += drv->dp_size;
+		drv->mba_dp_size = ALIGN(drv->mba_dp_size, SZ_4K);
 	}
 
 	mba_dp_virt = dma_alloc_attrs(dma_dev, drv->mba_dp_size, &mba_dp_phys,

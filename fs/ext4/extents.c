@@ -3127,19 +3127,11 @@ static int ext4_ext_zeroout(struct inode *inode, struct ext4_extent *ex)
 {
 	ext4_fsblk_t ee_pblock;
 	unsigned int ee_len;
-	int ret;
 
 	ee_len    = ext4_ext_get_actual_len(ex);
 	ee_pblock = ext4_ext_pblock(ex);
-
-	if (ext4_encrypted_inode(inode))
-		return ext4_encrypted_zeroout(inode, ex);
-
-	ret = sb_issue_zeroout(inode->i_sb, ee_pblock, ee_len, GFP_NOFS);
-	if (ret > 0)
-		ret = 0;
-
-	return ret;
+	return ext4_issue_zeroout(inode, le32_to_cpu(ex->ee_block), ee_pblock,
+				  ee_len);
 }
 
 /*
@@ -4818,8 +4810,7 @@ static long ext4_zero_range(struct file *file, loff_t offset,
 	}
 
 	if (!(mode & FALLOC_FL_KEEP_SIZE) &&
-	    (offset + len > i_size_read(inode) ||
-	     offset + len > EXT4_I(inode)->i_disksize)) {
+	     offset + len > i_size_read(inode)) {
 		new_size = offset + len;
 		ret = inode_newsize_ok(inode, new_size);
 		if (ret)
@@ -4995,8 +4986,7 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 	}
 
 	if (!(mode & FALLOC_FL_KEEP_SIZE) &&
-	    (offset + len > i_size_read(inode) ||
-	     offset + len > EXT4_I(inode)->i_disksize)) {
+	     offset + len > i_size_read(inode)) {
 		new_size = offset + len;
 		ret = inode_newsize_ok(inode, new_size);
 		if (ret)

@@ -2090,7 +2090,7 @@
 
 			config {
 				pins = "gpio95";
-				bias-disable;           /* no pull */
+				bias-pull-up;           /* pull up */
 				drive-strength = <2>;   /* 2 MA */
 			};
 		};
@@ -2103,7 +2103,7 @@
 
 			config {
 				pins = "gpio95";
-				bias-disable;           /* no pull */
+				bias-pull-up;           /* pull up */
 				drive-strength = <2>;   /* 2 MA */
 			};
 

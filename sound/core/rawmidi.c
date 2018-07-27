@@ -672,6 +672,7 @@ int snd_rawmidi_input_params(struct snd_rawmidi_substream *substream,
 	char *oldbuf;
 	struct snd_rawmidi_runtime *runtime = substream->runtime;
 	unsigned long flags;
+
 	snd_rawmidi_drain_input(substream);
 	if (params->buffer_size < 32 || params->buffer_size > 1024L * 1024L) {
 		return -EINVAL;

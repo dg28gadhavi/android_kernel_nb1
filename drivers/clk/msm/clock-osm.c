@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -2868,7 +2868,7 @@ static ssize_t debugfs_trace_method_get(struct file *file, char __user *buf,
 	else if (c->trace_method == XOR_PACKET)
 		len = snprintf(debug_buf, sizeof(debug_buf), "xor\n");
 
-	rc = simple_read_from_buffer((void __user *) buf, len, ppos,
+	rc = simple_read_from_buffer((void __user *) buf, count, ppos,
 				     (void *) debug_buf, len);
 
 	mutex_unlock(&debug_buf_mutex);
@@ -3220,24 +3220,6 @@ static int clk_osm_panic_callback(struct notifier_block *nfb,
 
 	return NOTIFY_OK;
 }
-
-#ifdef CONFIG_FIH_CPU_USAGE
-extern int cluster_actual_freq_get(void *data, u64 *val);
-
-void cluster_actual_freq_get_all(u64 *val_pwr, u64 *val_perf)
-{
-	int ret;
-
-	ret = cluster_actual_freq_get((void *)&pwrcl_clk.c, val_pwr);
-	if (ret) {
-		printk("pwrclk ret = %d\n", ret);
-	}
-	ret = cluster_actual_freq_get((void *)&perfcl_clk.c, val_perf);
-	if (ret) {
-		printk("perfclk ret = %d\n", ret);
-	}
-}
-#endif
 
 static unsigned long init_rate = 300000000;
 static unsigned long osm_clk_init_rate = 200000000;

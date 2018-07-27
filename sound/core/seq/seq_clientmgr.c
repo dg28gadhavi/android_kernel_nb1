@@ -1277,7 +1277,6 @@ static int snd_seq_ioctl_create_port(struct snd_seq_client *client,
 		port_idx = port->addr.port;
 		snd_seq_port_unlock(port);
 		snd_seq_delete_port(client, port_idx);
-
 		return -EINVAL;
 	}
 	if (client->type == KERNEL_CLIENT) {

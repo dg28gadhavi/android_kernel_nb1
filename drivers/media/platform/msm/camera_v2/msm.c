@@ -568,7 +568,7 @@ static inline int __msm_sd_close_subdevs(struct msm_sd_subdev *msm_sd,
 {
 	struct v4l2_subdev *sd;
 	sd = &msm_sd->sd;
-	pr_info("%s: Shutting down subdev %s", __func__, sd->name); /* MM-MC-Fix-TOF-deinit-deadlock-00+ */
+	pr_debug("%s: Shutting down subdev %s", __func__, sd->name);
 
 	v4l2_subdev_call(sd, core, ioctl, MSM_SD_SHUTDOWN, sd_close);
 	v4l2_subdev_call(sd, core, s_power, 0);
@@ -1288,7 +1288,7 @@ static ssize_t write_logsync(struct file *file, const char __user *buf,
 	uint64_t seq_num = 0;
 	int ret;
 
-	if (copy_from_user(lbuf, buf, sizeof(lbuf)))
+	if (copy_from_user(lbuf, buf, sizeof(lbuf) - 1))
 		return -EFAULT;
 
 	ret = sscanf(lbuf, "%llu", &seq_num);

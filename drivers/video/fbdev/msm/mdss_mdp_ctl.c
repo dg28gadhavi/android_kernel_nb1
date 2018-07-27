@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -68,7 +68,6 @@ static struct {
 	[MDSS_MDP_SSPP_DMA2]    = { .ext2 = { 16, 4, 0 } },
 	[MDSS_MDP_SSPP_DMA3]    = { .ext2 = { 20, 4, 0 } },
 };
-
 
 static void __mdss_mdp_mixer_write_cfg(struct mdss_mdp_mixer *mixer,
 		struct mdss_mdp_mixer_cfg *cfg);
@@ -5913,9 +5912,7 @@ int mdss_mdp_display_commit(struct mdss_mdp_ctl *ctl, void *arg,
 		} else {
 			sctl_flush_bits = sctl->flush_bits;
 		}
-		sctl->commit_in_progress = true;
 	}
-	ctl->commit_in_progress = true;
 	ctl_flush_bits = ctl->flush_bits;
 
 	ATRACE_END("postproc_programming");
@@ -5929,6 +5926,9 @@ int mdss_mdp_display_commit(struct mdss_mdp_ctl *ctl, void *arg,
 			MDP_COMMIT_STAGE_SETUP_DONE,
 			commit_cb->data);
 	ret = mdss_mdp_ctl_notify(ctl, MDP_NOTIFY_FRAME_READY);
+	ctl->commit_in_progress = true;
+	if (sctl)
+		sctl->commit_in_progress = true;
 
 	/*
 	 * When wait for fence timed out, driver ignores the fences
