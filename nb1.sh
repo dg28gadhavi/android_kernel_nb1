@@ -38,12 +38,12 @@ else
 echo -e "$Green  UberTC Repository Already Present  $nocol"
 fi
 
-if [ ! -d ~/DragonTC-7.0 ]; then
-echo -e "$Cyan  Cloning DragonTC Repository  $nocol"
-git clone https://github.com/dg28gadhavi/DragonTC-7.0 ~/DragonTC-7.0 
-echo -e "$Green  DragonTC Repository Cloned  $nocol"
+if [ ! -d ~/linux-x86 ]; then
+echo -e "$Cyan  Cloning Clang Repository  $nocol"
+git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 ~/linux-x86
+echo -e "$Green  Clang Repository Cloned  $nocol"
 else
-echo -e "$Green  DragonTC Repository Already Present  $nocol"
+echo -e "$Green  Clang Repository Already Present  $nocol"
 fi
 
 echo -e "$Blue  Setting Up Toolchain $nocol"
@@ -71,7 +71,7 @@ echo -e "$Green  Setting Up Deconfig  $nocol"
 make O=out/ NB1_defconfig 
 echo -e "$Red  Compilation Started  $nocol"
 make -j$(nproc --all) O=out \
-                                    CC="/home/$(whoami)/DragonTC-7.0/bin/clang" \
+                                    CC="/home/$(whoami)/linux-x86/clang-r328903/bin/clang" \
                                     CLANG_TRIPLE=aarch64-linux-gnu- \
 
 
