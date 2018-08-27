@@ -1,3 +1,5 @@
+#include <dt-bindings/msm/power-on.h>
+
 &soc {
 	gpio_keys {
 		/delete-node/ vol_up;
@@ -29,19 +31,22 @@
 &spmi_bus {
 	qcom,pm8998@0 {
 		qcom,power-on@800 {
-			qcom,s3-debounce = <128>;
-			qcom,pon_1 {
-				qcom,support-reset = <0>;
+			qcom,kpdpwr-sw-debounce;
+			qcom,s3-debounce = <16>;
+			qcom,s3-src = "kpdpwr";
+			qcom,hard-reset-poweroff-type =
+				<PON_POWER_OFF_WARM_RESET>;
+			qcom,pon_1 {  /* KPD_PWR_N */
+				qcom,support-reset = <1>;
 				qcom,s1-timer = <10256>;
 				qcom,s2-timer = <2000>;
-				qcom,s2-type = <1>;
+				qcom,s2-type = <8>;
 			};
-			/* PON: RESIN */
-			qcom,pon_2 {
-				linux,code = <115>;
+			qcom,pon_2 {  /* RESIN_N */
+				qcom,support-reset = <0>;
 			};
-			qcom,pon_3 {
-				qcom,s2-type = <4>;
+			qcom,pon_3 {  /* KPD_PWR_N AND RESIN_N */
+				qcom,support-reset = <0>;
 			};
 		};
 	};
