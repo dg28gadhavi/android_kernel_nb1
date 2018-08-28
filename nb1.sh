@@ -38,9 +38,9 @@ else
 echo -e "$Green  UberTC Repository Already Present  $nocol"
 fi
 
-if [ ! -d ~/DragonTC-7.0 ]; then
+if [ ! -d ~/DragonTC-8.0 ]; then
 echo -e "$Cyan  Cloning DragonTC Repository  $nocol"
-git clone https://github.com/dg28gadhavi/DragonTC-7.0 ~/DragonTC-7.0 
+git clone https://github.com/dg28gadhavi/DragonTC-8.0 ~/DragonTC-8.0
 echo -e "$Green  DragonTC Repository Cloned  $nocol"
 else
 echo -e "$Green  DragonTC Repository Already Present  $nocol"
@@ -71,7 +71,7 @@ echo -e "$Green  Setting Up Deconfig  $nocol"
 make O=out/ NB1_defconfig 
 echo -e "$Red  Compilation Started  $nocol"
 make -j$(nproc --all) O=out \
-                                    CC="/home/$(whoami)/DragonTC-7.0/bin/clang" \
+                                    CC="/home/$(whoami)/DragonTC-8.0/bin/clang" \
                                     CLANG_TRIPLE=aarch64-linux-gnu- \
 
 
