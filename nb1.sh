@@ -40,7 +40,7 @@ fi
 
 if [ ! -d ~/DragonTC-8.0 ]; then
 echo -e "$Cyan  Cloning DragonTC Repository  $nocol"
-git clone https://github.com/dg28gadhavi/DragonTC-8.0 ~/DragonTC-8.0
+git clone https://bitbucket.org/xanaxdroid/dragontc-8.0 ~/DragonTC-8.0
 echo -e "$Green  DragonTC Repository Cloned  $nocol"
 else
 echo -e "$Green  DragonTC Repository Already Present  $nocol"
