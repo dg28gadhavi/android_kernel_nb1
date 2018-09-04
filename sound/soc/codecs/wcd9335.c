@@ -52,6 +52,7 @@
 #undef USE_QC_MBHC
 #else
 #define USE_QC_MBHC
+#endif
 
 #ifdef CONFIG_BOEFFLA_SOUND
 #include "boeffla_sound.h"
